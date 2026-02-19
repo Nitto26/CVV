@@ -107,6 +107,53 @@ router.post('/diagnose', async (req, res) => {
     }
 });
 
+router.get('/search', async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.json([]);
+
+    try {
+        const searchTerm = query.toLowerCase();
+
+        // 1. Notice we do NOT use .single() or .maybeSingle() at the end
+        const { data, error } = await supabase
+            .from('doctor_search_view')
+            .select('*')
+            .ilike('search_text', `%${searchTerm}%`)
+            .eq('is_available', true); // Only show doctors currently on duty
+
+        if (error) throw error;
+
+        // 2. Data will be an array [{}, {}, {}]
+        res.json(data); 
+    } catch (err) {
+        console.error("Search Error:", err.message);
+        res.status(500).json({ error: "Search failed." });
+    }
+});
+
+// 2. MY APPOINTMENTS: Let the user see their tokens
+router.get('/my-tokens/:patientId', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('appointments')
+            .select(`
+                id, token_number, status, created_at,
+                staff (
+                    specialization,
+                    users (full_name),
+                    hospitals (name)
+                )
+            `)
+            .eq('patient_id', req.params.patientId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 2. TOKEN BOOKING (The Live Sync)
 // Creates a token and notifies the hospital system
 router.post('/book-token', async (req, res) => {
