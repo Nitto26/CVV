@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arviya - Doctor Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/doctor-dashboard.css">
+<link rel="stylesheet" href="../css/doctor-common.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>ARVIYA</h2>
+    <ul>
+        <li><a href="doctor-dashboard.html"><strong>Dashboard</strong></a></li>
+        <li><a href="doctor-appointments.html">My Appointments</a></li>
+        <li><a href="doctor-consultation.html">Patients</a></li>
+        <li><a href="doctor-availability.html">Availability</a></li>
+        <li><a href="doctor-login.html">Logout</a></li>
+    </ul>
+</div>
+
+<div class="sidebar-backdrop"></div>
+
+<!-- Main -->
+<div class="main">
+
+    <div class="header">
+        <div class="header-title">
+            <button class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
+            <h1>Doctor Dashboard</h1>
+        </div>
+        <div class="profile">Dr. Mehta</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Today's Appointments</h3>
+            <p>12</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Pending Consultations</h3>
+            <p>4</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Completed Today</h3>
+            <p>8</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Specialization</h3>
+            <p>Cardiology</p>
+        </div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Time</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>Ramesh Kumar</td>
+                    <td>10:30 AM</td>
+                    <td>Chest Pain</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                </tr>
+
+                <tr>
+                    <td>Anita Sharma</td>
+                    <td>11:15 AM</td>
+                    <td>Fracture Pain</td>
+                    <td class="status status-pending">Waiting</td>
+                </tr>
+
+                <tr>
+                    <td>Rahul Das</td>
+                    <td>12:00 PM</td>
+                    <td>High Fever</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="../js/doctor-common.js"></script>
+<script src="../js/doctor-dashboard.js"></script>
+
+</body>
+</html>

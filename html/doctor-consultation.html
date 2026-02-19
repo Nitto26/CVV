@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arviya - Consultation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/doctor-consultation.css">
+<link rel="stylesheet" href="../css/doctor-common.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>ARVIYA</h2>
+    <ul>
+        <li><a href="doctor-dashboard.html">Dashboard</a></li>
+        <li><a href="doctor-appointments.html">My Appointments</a></li>
+        <li><a href="doctor-consultation.html"><strong>Patients</strong></a></li>
+        <li><a href="doctor-availability.html">Availability</a></li>
+        <li><a href="doctor-login.html">Logout</a></li>
+    </ul>
+</div>
+
+<div class="sidebar-backdrop"></div>
+
+<!-- Main -->
+<div class="main">
+
+    <div class="header">
+        <div class="header-title">
+            <button class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
+            <h1>Patient Consultation</h1>
+        </div>
+    </div>
+
+    <!-- Patient Info -->
+    <div class="card">
+        <h3>Patient Information</h3>
+        <p><strong>Name:</strong> Ramesh Kumar</p>
+        <p><strong>Age:</strong> 45</p>
+        <p><strong>Gender:</strong> Male</p>
+        <p><strong>Symptoms:</strong> Chest Pain, Shortness of Breath</p>
+    </div>
+
+    <!-- Medical History -->
+    <div class="card">
+        <h3>Previous Medical History</h3>
+        <p>• 2024 - Hypertension</p>
+        <p>• 2025 - Mild Cardiac Episode</p>
+    </div>
+
+    <!-- Diagnosis & Prescription -->
+    <div class="card">
+        <h3>Diagnosis & Prescription</h3>
+
+        <label>Diagnosis</label>
+        <input type="text" id="diagnosis" placeholder="Enter diagnosis">
+
+        <label>Medications</label>
+        <textarea id="medications" placeholder="Enter prescribed medicines"></textarea>
+
+        <label>Doctor Notes</label>
+        <textarea id="notes" placeholder="Additional notes"></textarea>
+
+        <button class="complete-btn" onclick="completeConsultation()">Complete Consultation</button>
+
+        <div class="success-msg" id="successMessage">
+            Consultation Completed & Prescription Saved!
+        </div>
+    </div>
+
+</div>
+
+<script src="../js/doctor-common.js"></script>
+<script src="../js/doctor-consultation.js"></script>
+
+</body>
+</html>

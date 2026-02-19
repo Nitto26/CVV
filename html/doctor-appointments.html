@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arviya - My Appointments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/doctor-appointments.css">
+<link rel="stylesheet" href="../css/doctor-common.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>ARVIYA</h2>
+    <ul>
+        <li><a href="doctor-dashboard.html">Dashboard</a></li>
+        <li><a href="doctor-appointments.html"><strong>My Appointments</strong></a></li>
+        <li><a href="doctor-consultation.html">Patients</a></li>
+        <li><a href="doctor-availability.html">Availability</a></li>
+        <li><a href="doctor-login.html">Logout</a></li>
+    </ul>
+</div>
+
+<div class="sidebar-backdrop"></div>
+
+<!-- Main -->
+<div class="main">
+
+    <div class="header">
+        <div class="header-title">
+            <button class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
+            <h1>My Appointments</h1>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Age</th>
+                    <th>Time</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>Ramesh Kumar</td>
+                    <td>45</td>
+                    <td>10:30 AM</td>
+                    <td>Chest Pain</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                    <td>
+                        <button class="action-btn start" onclick="startConsultation(this)">Start</button>
+                        <button class="action-btn cancel" onclick="cancelAppointment(this)">Cancel</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Anita Sharma</td>
+                    <td>32</td>
+                    <td>11:15 AM</td>
+                    <td>Fracture Pain</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                    <td>
+                        <button class="action-btn start" onclick="startConsultation(this)">Start</button>
+                        <button class="action-btn cancel" onclick="cancelAppointment(this)">Cancel</button>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="../js/doctor-common.js"></script>
+<script src="../js/doctor-appointments.js"></script>
+
+</body>
+</html>
