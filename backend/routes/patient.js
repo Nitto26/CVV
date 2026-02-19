@@ -7,49 +7,101 @@ require('dotenv').config();
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// 1. AI TRIAGE & ROUTING
-// Takes raw text -> AI determines Specialization -> DB finds Doctors
+// Function to calculate distance in KM using Haversine Formula
+const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; 
+};
+
 router.post('/diagnose', async (req, res) => {
     try {
-        const { symptomText, district } = req.body;
+        const { symptomText, userLat, userLong } = req.body;
+        console.log("User Coords:", userLat, userLong);
 
-        // Groq AI Logic for lightning-fast triage
+        // 1. Groq AI Triage
         const chatCompletion = await groq.chat.completions.create({
             messages: [
-                {
-                    role: "system",
-                    content: "You are a hospital routing assistant. You must return ONLY valid JSON."
+                { 
+                    role: "system", 
+                    content: `You are a hospital routing assistant. 
+                    You MUST return ONLY a raw JSON object. 
+                    No markdown, no backticks, no text before or after.
+                    
+                    Structure:
+                    {
+                      "spec": "General Medicine" | "Cardiology" | "Pediatrics" | "Dermatology" | "Orthopedics" | "Neurology",
+                      "urgency": number (1-10),
+                      "advice": "one sentence string"
+                    }` 
                 },
-                {
-                    role: "user",
-                    content: `Patient symptoms: "${symptomText}". 
-                    Identify the required specialization from: [General Medicine, Cardiology, Pediatrics, Dermatology, Orthopedics, Neurology].
-                    Return JSON: {"spec": "String", "urgency": 1-10, "advice": "One sentence safety advice"}`
-                }
+                { role: "user", content: `Patient symptoms: "${symptomText}"` }
             ],
             model: "llama-3.1-8b-instant",
-            response_format: { type: "json_object" }
+            // This is key: it forces the model to output a JSON object
+            response_format: { type: "json_object" } 
         });
 
-        const aiData = JSON.parse(chatCompletion.choices[0].message.content);
+        // 2. EXTRA SAFETY: Regex Cleanup
+        let rawContent = chatCompletion.choices[0].message.content;
+        
+        // This removes ```json and ``` if the AI accidentally adds them
+        const cleanedContent = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
+        
+        const aiData = JSON.parse(cleanedContent);
 
-        // Fetch doctors based on AI suggestion + user location
-        let query = supabase
+        // 2. Fetch Doctors + Hospital Info + Existing Appointments (for Token calculation)
+        const { data: doctors, error } = await supabase
             .from('staff')
-            .select('*, hospitals(name, district, hospital_type)')
+            .select(`
+                *,
+                hospitals(name, district, latitude, longitude),
+                appointments(id, status),
+                users(id,full_name)
+            `)
             .eq('specialization', aiData.spec)
-            .eq('is_available', true);
+            .eq('is_available', true)
+            .eq('appointments.status', 'waiting'); // Only count waiting patients
 
-        if (district) {
-            query = query.ilike('hospitals.district', district);
-        }
+        if (error) throw error;
 
-        const { data: doctors } = await query;
+        // 3. Process the data (Distance & Tokens)
+        const enrichedDoctors = doctors.map(doc => {
+            // Calculate Distance
+            let distance = null;
+            if (userLat && userLong && doc.hospitals.latitude && doc.hospitals.longitude) {
+                // console.log("Hospital Coords:", doc.hospitals.latitude, doc.hospitals.longitude);
+                distance = getDistance(userLat, userLong, doc.hospitals.latitude, doc.hospitals.longitude);
+            }
+
+            // Calculate Tokens Left
+            const waitingCount = doc.appointments ? doc.appointments.length : 0;
+            const tokensLeft = doc.token_limit - waitingCount;
+
+            return {
+                id: doc.id,
+                name: doc.users.full_name, // Ensure this exists or join users table
+                specialization: doc.specialization,
+                hospital: doc.hospitals.name,
+                distance: distance ? parseFloat(distance.toFixed(2)) : null,
+                tokensLeft: tokensLeft > 0 ? tokensLeft : 0,
+                isFull: tokensLeft <= 0
+            };
+        });
+
+        // 4. Sort by Distance (Closest first)
+        const sortedDoctors = enrichedDoctors.sort((a, b) => a.distance - b.distance);
 
         res.json({ 
             aiAnalysis: aiData, 
-            recommendedDoctors: doctors 
+            recommendedDoctors: sortedDoctors 
         });
+
     } catch (err) {
         res.status(500).json({ error: "AI routing failed", details: err.message });
     }
