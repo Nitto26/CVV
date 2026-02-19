@@ -27,68 +27,95 @@ router.post('/login-request', async (req, res) => {
     res.json({ message: "OTP sent to registered mobile/email", mask: citizen.phone_number.slice(-4) });
 });
 
+// routes/auth.js
+
 router.post('/verify-otp', async (req, res) => {
     const { aadhaarNumber, otpCode } = req.body;
 
-    // 1. Check if the Aadhaar and OTP match
-    const { data: citizen, error } = await supabase
-        .from('national_identity')
-        .select('id, full_name, age_group, aadhaar_number')
-        .eq('aadhaar_number', aadhaarNumber)
-        .eq('otp_code', otpCode)
-        .single();
+    try {
+        // 1. Verify OTP against the National Identity table
+        const { data: citizen, error: otpError } = await supabase
+            .from('national_identity')
+            .select('*')
+            .eq('aadhaar_number', aadhaarNumber)
+            .eq('otp_code', otpCode)
+            .maybeSingle();
 
-    if (error || !citizen) return res.status(401).json({ error: "Invalid OTP" });
+        if (otpError || !citizen) return res.status(401).json({ error: "Invalid OTP" });
 
-    // 2. Clear OTP after successful use
-    await supabase.from('national_identity').update({ otp_code: null }).eq('aadhaar_number', aadhaarNumber);
+        // 2. Clear OTP
+        await supabase.from('national_identity').update({ otp_code: null }).eq('aadhaar_number', aadhaarNumber);
 
-    // 3. Sync with your 'users' table (Check if they exist, or create them)
-    let { data: user } = await supabase.from('users').select('id').eq('aadhaar_hash', aadhaarNumber).single();
+        // 3. THE BRIDGE: Find or Create this person in our app's 'users' table
+        let { data: appUser, error: userError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('aadhaar_hash', aadhaarNumber)
+            .maybeSingle();
 
-    if (!user) {
-        const { data: newUser } = await supabase.from('users').insert([{
-            full_name: citizen.full_name,
-            email: citizen.email || `user_${aadhaarNumber}@hsync.in`, // Fallback
-            password_hash: 'AADHAAR_MOCK',
-            role: 'patient',
-            district: 'Thrissur', 
-            age_group: citizen.age_group,
-            aadhaar_hash: aadhaarNumber
-        }]).select().single();
-        user = newUser;
+        // If they don't exist in our app yet, "Sign them up" automatically using Aadhaar data
+        if (!appUser) {
+            const { data: newUser, error: createError } = await supabase
+                .from('users')
+                .insert([{
+                    full_name: citizen.full_name,
+                    email: citizen.email,
+                    role: 'patient',
+                    district: 'Thrissur', // Default or extracted from address
+                    age_group: citizen.age_group,
+                    aadhaar_hash: aadhaarNumber,
+                    password_hash: 'AADHAAR_AUTH'
+                }])
+                .select('id')
+                .single();
+            
+            if (createError) throw createError;
+            appUser = newUser;
+        }
+
+        // 4. Return the APP USER ID (from users table)
+        res.json({ 
+            message: "Success", 
+            patient_id: appUser.id // THIS is what the frontend uses for bookings
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    // ONLY return what you specified
-    res.json({ 
-        message: "Login Successful", 
-        patient_id: user.id 
-    });
 });
 
 router.get('/profile/:patientId', async (req, res) => {
     try {
-        // 1. Get the Aadhaar hash from our user table first
+        // 1. Find the user in our app's 'users' table using their App ID
         const { data: user, error: userError } = await supabase
             .from('users')
-            .select('aadhaar_hash')
+            .select('aadhaar_hash') // This is the bridge
             .eq('id', req.params.patientId)
-            .single();
+            .maybeSingle();
 
-        if (userError || !user) return res.status(404).json({ error: "User session not found" });
+        if (userError || !user) return res.status(404).json({ error: "User not found" });
 
-        // 2. Fetch the rich profile data from the National Identity table
-        const { data: profile, error: profileError } = await supabase
+        // 2. Use that Aadhaar Number to fetch the rich details from the National table
+        const { data: nationalData, error: nationalError } = await supabase
             .from('national_identity')
-            .select('full_name, age_group, email, phone_number, gender, blood_group, address, aadhaar_number')
+            .select('*')
             .eq('aadhaar_number', user.aadhaar_hash)
-            .single();
+            .maybeSingle();
 
-        if (profileError) throw profileError;
+        if (nationalError || !nationalData) return res.status(404).json({ error: "Identity not found" });
 
-        res.json(profile);
+        // 3. Combine them and return (The Frontend sees one clean object)
+        res.json({
+            app_id: req.params.patientId,
+            full_name: nationalData.full_name,
+            age_group: nationalData.age_group,
+            blood_group: nationalData.blood_group,
+            gender: nationalData.gender,
+            address: nationalData.address,
+            phone: nationalData.phone_number
+        });
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch profile", details: err.message });
+        res.status(500).json({ error: "Server error fetching profile" });
     }
 });
 
