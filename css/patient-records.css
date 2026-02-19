@@ -1,0 +1,206 @@
+:root {
+    --bg-start: #eef2ff;
+    --bg-end: #d1fae5;
+    --panel: rgba(255, 255, 255, 0.7);
+    --panel-strong: rgba(255, 255, 255, 0.86);
+    --border: rgba(255, 255, 255, 0.58);
+    --text: #0f172a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.20), transparent 32%),
+        radial-gradient(circle at 82% 88%, rgba(20, 184, 166, 0.18), transparent 34%),
+        linear-gradient(130deg, var(--bg-start), var(--bg-end));
+    padding: 24px;
+    gap: 24px;
+}
+
+.sidebar {
+    width: 255px;
+    background: linear-gradient(180deg, #1e3a8a, #1d4ed8);
+    color: white;
+    padding: 26px;
+    border-radius: 26px;
+    box-shadow: 0 20px 38px rgba(30, 58, 138, 0.35);
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 36px;
+    letter-spacing: 3px;
+    font-size: clamp(24px, 2.2vw, 32px);
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.sidebar ul li:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+}
+
+.main {
+    flex: 1;
+    padding: clamp(24px, 3vw, 40px);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    backdrop-filter: blur(12px);
+}
+
+.header h1 {
+    color: var(--text);
+    margin-bottom: 18px;
+    font-size: clamp(30px, 3.2vw, 42px);
+}
+
+.search-box,
+.patient-info,
+.table-container,
+.add-prescription {
+    background: var(--panel-strong);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    margin-bottom: 18px;
+}
+
+.search-box input {
+    padding: 12px 14px;
+    width: min(100%, 360px);
+    border-radius: 10px;
+    border: 1px solid #dbe4f1;
+    margin-right: 8px;
+    font-size: 15px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.search-box button,
+.add-btn {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #2563eb, #14b8a6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.patient-info {
+    display: none;
+}
+
+.patient-info p {
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #334155;
+}
+
+.table-container {
+    overflow-x: auto;
+    display: none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 14px;
+    font-size: 15px;
+    text-align: left;
+}
+
+th {
+    background: #f8fafc;
+    color: #334155;
+}
+
+tr {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.add-prescription {
+    display: none;
+}
+
+.add-prescription input,
+textarea {
+    width: 100%;
+    padding: 11px 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid #dbe4f1;
+    font-size: 15px;
+}
+
+@media (max-width: 1100px) {
+    body {
+        padding: 14px;
+        gap: 14px;
+    }
+    .sidebar {
+        width: 220px;
+        padding: 18px;
+    }
+    .sidebar ul li {
+        font-size: 14px;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+    .main {
+        padding: 18px;
+        width: 100%;
+        border-radius: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .main {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    th, td {
+        padding: 11px;
+        font-size: 13px;
+    }
+}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arviya - Appointment Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/appointment-management.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>ARVIYA</h2>
+    <ul>
+        <li onclick="window.location.href='index.html'">Dashboard</li>
+        <li onclick="window.location.href='resource-management.html'">Resources</li>
+        <li onclick="window.location.href='doctor-management.html'">Doctors</li>
+        <li onclick="window.location.href='appointment-management.html'"><strong>Appointments</strong></li>
+        <li onclick="window.location.href='patient-records.html'">Patients</li>
+        <li onclick="window.location.href='analytics.html'">Analytics</li>
+        <li onclick="window.location.href='login.html'">Logout</li>
+    </ul>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+    <div class="header">
+        <h1>Appointment Management</h1>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Doctor</th>
+                    <th>Specialization</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="appointmentTable">
+
+                <tr>
+                    <td>Ramesh Kumar</td>
+                    <td>Dr. Mehta</td>
+                    <td>Cardiology</td>
+                    <td>Today</td>
+                    <td>10:30 AM</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                    <td>
+                        <button class="action-btn complete" onclick="completeAppointment(this)">Complete</button>
+                        <button class="action-btn cancel" onclick="cancelAppointment(this)">Cancel</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Anita Sharma</td>
+                    <td>Dr. Patel</td>
+                    <td>Orthopedic</td>
+                    <td>Today</td>
+                    <td>11:15 AM</td>
+                    <td class="status status-upcoming">Upcoming</td>
+                    <td>
+                        <button class="action-btn complete" onclick="completeAppointment(this)">Complete</button>
+                        <button class="action-btn cancel" onclick="cancelAppointment(this)">Cancel</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Rahul Das</td>
+                    <td>Dr. Sharma</td>
+                    <td>Neurology</td>
+                    <td>Yesterday</td>
+                    <td>04:00 PM</td>
+                    <td class="status status-completed">Completed</td>
+                    <td>—</td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="../js/appointment-management.js"></script>
+
+</body>
+</html>

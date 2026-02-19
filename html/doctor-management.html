@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arviya - Doctor Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/doctor-management.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>ARVIYA</h2>
+    <ul>
+        <li onclick="window.location.href='index.html'">Dashboard</li>
+        <li onclick="window.location.href='resource-management.html'">Resources</li>
+        <li onclick="window.location.href='doctor-management.html'"><strong>Doctors</strong></li>
+        <li onclick="window.location.href='appointment-management.html'">Appointments</li>
+        <li onclick="window.location.href='patient-records.html'">Patients</li>
+        <li onclick="window.location.href='analytics.html'">Analytics</li>
+        <li onclick="window.location.href='login.html'">Logout</li>
+    </ul>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+    <div class="header">
+        <h1>Doctor Management</h1>
+        <button class="add-btn">+ Add Doctor</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Specialization</th>
+                    <th>License No</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="doctorTable">
+
+                <tr>
+                    <td>Dr. Mehta</td>
+                    <td>Cardiologist</td>
+                    <td>MED12345</td>
+                    <td class="status-approved">Approved</td>
+                    <td>
+                        <button class="action-btn deactivate">Deactivate</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Dr. Sharma</td>
+                    <td>Neurologist</td>
+                    <td>MED67890</td>
+                    <td class="status-pending">Pending</td>
+                    <td>
+                        <button class="action-btn approve" onclick="approveDoctor(this)">Approve</button>
+                        <button class="action-btn reject" onclick="rejectDoctor(this)">Reject</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Dr. Patel</td>
+                    <td>Orthopedic</td>
+                    <td>MED54321</td>
+                    <td class="status-rejected">Rejected</td>
+                    <td>
+                        <button class="action-btn approve" onclick="approveDoctor(this)">Approve</button>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="../js/doctor-management.js"></script>
+
+</body>
+</html>
