@@ -204,4 +204,129 @@ router.get('/my-history/:patientId', async (req, res) => {
     res.json(data);
 });
 
+// GET /api/v1/patient/find-pharmacy/:prescriptionId
+router.get('/find-pharmacy/:prescriptionId', async (req, res) => {
+    try {
+        // 1. Get the medicines required for this prescription
+        const { data: prescription, error: pError } = await supabase
+            .from('medical_records')
+            .select('meds_jsonb')
+            .eq('id', req.params.prescriptionId)
+            .single();
+
+        if (pError || !prescription) return res.status(404).json({ error: "Prescription not found" });
+
+        const requiredMeds = prescription.meds_jsonb.map(m => m.name);
+        const totalMedsCount = requiredMeds.length;
+
+        // 2. Build a fuzzy search filter
+        // This converts ['Paracetamol', 'Dolo'] into "item_name.ilike.*Paracetamol*,item_name.ilike.*Dolo*"
+        const fuzzyFilter = requiredMeds
+            .map(med => `item_name.ilike.*${med}*`)
+            .join(',');
+
+        // 3. Query inventory for partial matches across all hospitals
+        const { data: matches, error: iError } = await supabase
+            .from('inventory')
+            .select(`
+                item_name,
+                stock_count,
+                hospital_id,
+                hospitals (name, district, latitude, longitude)
+            `)
+            .or(fuzzyFilter) 
+            .gt('stock_count', 0); // Must be in stock
+
+        if (iError) throw iError;
+
+        // 4. Group matches by Hospital and verify complete stock
+        const hospitalGroups = matches.reduce((acc, item) => {
+            const hId = item.hospital_id;
+            if (!acc[hId]) {
+                acc[hId] = {
+                    info: item.hospitals,
+                    matchedRequirements: new Set(),
+                    stockDetails: []
+                };
+            }
+
+            // Check which of our required meds this inventory item satisfies
+            requiredMeds.forEach(reqMed => {
+                if (item.item_name.toLowerCase().includes(reqMed.toLowerCase())) {
+                    acc[hId].matchedRequirements.add(reqMed);
+                    acc[hId].stockDetails.push({
+                        needed: reqMed,
+                        found: item.item_name,
+                        stock: item.stock_count
+                    });
+                }
+            });
+            return acc;
+        }, {});
+
+        // 5. Filter: Only return hospitals that matched ALL required medicines
+        const availableLocations = Object.values(hospitalGroups)
+            .filter(h => h.matchedRequirements.size === totalMedsCount)
+            .map(h => ({
+                hospitalName: h.info.name,
+                district: h.info.district,
+                latitude: h.info.latitude,
+                longitude: h.info.longitude,
+                availableInventory: h.stockDetails
+            }));
+
+        res.json({
+            required: requiredMeds,
+            count: availableLocations.length,
+            locations: availableLocations
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: "Locator failed", details: err.message });
+    }
+});
+
+// 1. GET MY PRESCRIPTIONS (Secure & Private)
+router.get('/my-prescriptions/:patientId', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('medical_records')
+            .select(`
+                id,
+                access_code,
+                created_at,
+                diagnosis_code,
+                meds_jsonb,
+                lab_tests_ordered,
+                is_inpatient,
+                staff!inner (
+                    users (full_name),
+                    specialization
+                ),
+                hospitals!inner (name)
+            `)
+            .eq('patient_id', req.params.patientId) // THE SECURITY LOCK
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Flatten for the frontend
+        const result = data.map(record => ({
+            id: record.id,
+            date: record.created_at,
+            doctor: record.staff.users.full_name,
+            hospital: record.hospitals.name,
+            diagnosis: record.diagnosis_code,
+            meds: record.meds_jsonb,
+            tests: record.lab_tests_ordered,
+            isInpatient: record.is_inpatient,
+            access_code: record.access_code
+        }));
+
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: "Access Denied", details: err.message });
+    }
+});
+
 module.exports = router;

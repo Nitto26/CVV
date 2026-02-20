@@ -86,7 +86,7 @@ router.post('/prescribe', async (req, res) => {
         // 3. Update the appointment status to 'completed'
         await supabase
             .from('appointments')
-            .update({ status: 'completed' })
+            .update({ status: 'finished' })
             .eq('id', appointmentId);
 
         res.json({ 
