@@ -46,45 +46,58 @@ router.patch('/update-status', async (req, res) => {
     }
 });
 
-// 3. FINALIZE CONSULTATION & PRESCRIBE
-// This creates the 6-digit access code for the Pharmacist
 router.post('/prescribe', async (req, res) => {
-    const { appointmentId, patientId, staffId, hospitalId, diagnosis, meds, tests } = req.body;
-
-    // Generate a random 6-digit code (The Handshake)
-    const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Added isInpatient to the request body
+    const { appointmentId, diagnosis, meds, tests, isInpatient } = req.body;
 
     try {
-        // 1. Create the Medical Record
+        // 1. Fetch the IDs from the appointment record
+        const { data: appointment, error: fetchError } = await supabase
+            .from('appointments')
+            .select('patient_id, doctor_id, hospital_id')
+            .eq('id', appointmentId)
+            .single();
+
+        if (fetchError || !appointment) {
+            return res.status(404).json({ error: "Appointment not found" });
+        }
+
+        // Generate the 6-digit Pharmacy Handshake Code
+        const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // 2. Create the Medical Record including the is_inpatient flag
         const { data: record, error: recordError } = await supabase
             .from('medical_records')
             .insert([{
-                patient_id: patientId,
-                doctor_id: staffId,
-                hospital_id: hospitalId,
+                appointment_id: appointmentId,
+                patient_id: appointment.patient_id,
+                doctor_id: appointment.doctor_id,
+                hospital_id: appointment.hospital_id,
                 diagnosis_code: diagnosis,
-                meds_jsonb: meds, // Expecting array: [{name: "Paracetamol", dosage: "500mg"}]
-                lab_tests: tests,
+                meds_jsonb: meds,
+                lab_tests_ordered: tests, // Matches your table column name
+                is_inpatient: isInpatient || false, // Defaults to false if not provided
                 access_code: accessCode
             }])
-            .select()
-            .single();
+            .select().single();
 
         if (recordError) throw recordError;
 
-        // 2. Mark Appointment as Completed
+        // 3. Update the appointment status to 'completed'
         await supabase
             .from('appointments')
             .update({ status: 'completed' })
             .eq('id', appointmentId);
 
         res.json({ 
-            message: "Prescription Finalized", 
-            accessCode: accessCode, 
-            recordId: record.id 
+            success: true,
+            message: "Consultation finalized. Data synced.",
+            accessCode: accessCode,
+            isInpatient: record.is_inpatient
         });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "Workflow failed", details: err.message });
     }
 });
 
