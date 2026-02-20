@@ -55,4 +55,54 @@ router.post('/dispense', async (req, res) => {
     }
 });
 
+// POST /api/v1/pharmacy/add-inventory
+router.post('/add-inventory', async (req, res) => {
+    const { hospitalId, medicineName, stockQuantity, threshold_limit, unitPrice } = req.body;
+
+    try {
+        // .upsert() will update the row if (hospital_id + item_name) matches, 
+        // otherwise it inserts a new row.
+        const { data, error } = await supabase
+            .from('inventory')
+            .upsert({
+                hospital_id: hospitalId,
+                item_name: medicineName,
+                stock_count: stockQuantity,
+                unit_price: unitPrice,
+                threshold_limit: threshold_limit,
+                updated_at: new Date()
+            }, {
+                onConflict: 'hospital_id, item_name' 
+            })
+            .select();
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            message: `Inventory updated for ${medicineName}`,
+            data: data[0]
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: "Failed to add inventory", details: err.message });
+    }
+});
+
+// GET /api/v1/pharmacy/my-inventory/:hospitalId
+router.get('/my-inventory/:hospitalId', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('hospital_id', req.params.hospitalId)
+            .order('item_name', { ascending: true });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: "Fetch failed", details: err.message });
+    }
+});
+
 module.exports = router;
